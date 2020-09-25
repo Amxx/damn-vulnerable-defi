@@ -20,7 +20,7 @@ contract TheRewarderPool {
     // Token used for internal accounting and snapshots
     // Pegged 1:1 with the liquidity token
     AccountingToken public accToken;
-    
+
     // Token in which rewards are issued
     RewardToken public rewardToken;
 
@@ -41,7 +41,7 @@ contract TheRewarderPool {
      */
     function deposit(uint256 amountToDeposit) external {
         require(amountToDeposit > 0, "Must deposit tokens");
-        
+
         accToken.mint(msg.sender, amountToDeposit);
         distributeRewards();
 
@@ -60,22 +60,22 @@ contract TheRewarderPool {
 
         if(isNewRewardsRound()) {
             _recordSnapshot();
-        }        
-        
+        }
+
         uint256 totalDeposits = accToken.totalSupplyAt(lastSnapshotIdForRewards);
         uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards);
 
         if (totalDeposits > 0) {
             uint256 reward = (amountDeposited * 100) / totalDeposits;
 
-            if(reward > 0 && !_hasRetrievedReward(msg.sender)) {                
+            if(reward > 0 && !_hasRetrievedReward(msg.sender)) {
                 rewardInWei = reward * 10 ** 18;
                 rewardToken.mint(msg.sender, rewardInWei);
                 lastRewardTimestamps[msg.sender] = block.timestamp;
             }
         }
 
-        return rewardInWei;     
+        return rewardInWei;
     }
 
     function _recordSnapshot() private {

