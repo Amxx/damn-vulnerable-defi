@@ -13,7 +13,7 @@ contract PuppetPool is ReentrancyGuard {
     address public uniswapOracle;
     mapping(address => uint256) public deposits;
     DamnValuableToken public token;
-    
+
     constructor (address tokenAddress, address uniswapOracleAddress) public {
         token = DamnValuableToken(tokenAddress);
         uniswapOracle = uniswapOracleAddress;
@@ -25,13 +25,13 @@ contract PuppetPool is ReentrancyGuard {
 
         uint256 tokenPriceInWei = computeOraclePrice();
         uint256 depositRequired = borrowAmount.mul(tokenPriceInWei) * 2;
-        
+
         require(amountToDeposit >= depositRequired, "Not depositing enough collateral");
         if (amountToDeposit > depositRequired) {
             uint256 amountToReturn = amountToDeposit - depositRequired;
             amountToDeposit -= amountToReturn;
             msg.sender.sendValue(amountToReturn);
-        }        
+        }
 
         deposits[msg.sender] += amountToDeposit;
 
