@@ -88,7 +88,7 @@ describe('[Challenge] Puppet', function () {
         expect(await this.lendingPool.computeOraclePrice()).to.be.bignumber.eq('1');
 
         // Track attacker's initial ETH balance (to ensure it doesn't decrease)
-        this.intialAttackerEthBalance = await balance.current(attacker);
+        this.initialAttackerEthBalance = await balance.current(attacker);
     });
 
     it('Exploit', async function () {
@@ -114,6 +114,6 @@ describe('[Challenge] Puppet', function () {
         // Attacker ETH balance has not decreased
         expect(
             await balance.current(attacker)
-        ).to.be.bignumber.gte(this.intialAttackerEthBalance);
+        ).to.be.bignumber.gte(this.initialAttackerEthBalance);
     });
 });
